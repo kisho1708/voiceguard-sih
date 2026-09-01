@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceGuard — Real-Time Voice Integrity & Anti-Spoofing</title>
+  <meta name="description" content="Production-quality enterprise real-time voice integrity and anti-spoofing monitoring system.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- TOP APPLICATION BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand-lockup">
+          <div class="brand-icon-wrap">
+            <i data-lucide="shield-alert" class="brand-icon"></i>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">VoiceGuard</span>
+            <span class="brand-subtitle">Voice Integrity & Anti-Spoofing</span>
+          </div>
+        </div>
+        <div class="tenant-badge">
+          <span class="tenant-dot"></span>
+          <span class="tenant-label">SOC APAC-EAST // TIER-2</span>
+        </div>
+      </div>
+
+      <div class="topbar-center">
+        <div class="search-bar">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" id="globalSearch" placeholder="Search sessions, callers, case IDs, alerts..." autocomplete="off">
+          <kbd class="kbd-shortcut">/</kbd>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Live System Stream Status -->
+        <div class="system-stream-status" id="streamStatusBadge" title="Audio streaming engine status">
+          <span class="stream-pulse-dot"></span>
+          <span class="stream-status-text" id="streamStatusText">Audio Engine Ready</span>
+        </div>
+
+        <!-- Alert Notification Center -->
+        <button class="icon-btn" id="alertBellBtn" title="Security Alerts" aria-label="Security Alerts">
+          <i data-lucide="bell"></i>
+          <span class="badge-count" id="alertCountBadge">2</span>
+        </button>
+
+        <!-- Theme Switcher -->
+        <div class="theme-menu-wrap">
+          <button class="icon-btn" id="themeToggleBtn" title="Toggle Theme" aria-label="Toggle theme">
+            <i data-lucide="sun" id="themeIcon"></i>
+          </button>
+        </div>
+
+        <!-- Analyst Profile -->
+        <div class="analyst-profile">
+          <div class="analyst-avatar">KK</div>
+          <div class="analyst-info">
+            <span class="analyst-name">K. Kumar</span>
+            <span class="analyst-role">Fraud Operations Analyst</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN WRAPPER -->
+    <div class="app-body">
+      
+      <!-- SIDEBAR NAVIGATION -->
+      <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <div class="nav-section-label">MONITORING</div>
+          <button class="nav-item active" data-view="live-monitor">
+            <i data-lucide="activity" class="nav-icon"></i>
+            <span class="nav-label">Live Monitor</span>
+            <span class="nav-pill live-pill" id="sidebarLivePill">LIVE</span>
+          </button>
+          <button class="nav-item" data-view="overview">
+            <i data-lucide="layout-dashboard" class="nav-icon"></i>
+            <span class="nav-label">Overview</span>
+          </button>
+
+          <div class="nav-section-label">SECURITY OPS</div>
+          <button class="nav-item" data-view="investigations">
+            <i data-lucide="folder-shield" class="nav-icon"></i>
+            <span class="nav-label">Investigations</span>
+            <span class="nav-pill badge-pill" id="investigationsBadge">3</span>
+          </button>
+          <button class="nav-item" data-view="history">
+            <i data-lucide="history" class="nav-icon"></i>
+            <span class="nav-label">Detection History</span>
+          </button>
+          <button class="nav-item" data-view="analytics">
+            <i data-lucide="bar-chart-3" class="nav-icon"></i>
+            <span class="nav-label">Analytics</span>
+          </button>
+
+          <div class="nav-section-label">CONFIGURATION</div>
+          <button class="nav-item" data-view="settings">
+            <i data-lucide="sliders" class="nav-icon"></i>
+            <span class="nav-label">Settings</span>
+          </button>
+        </nav>
+
+        <!-- Sidebar Footer Status -->
+        <div class="sidebar-footer">
+          <div class="system-health-card">
+            <div class="health-header">
+              <span class="health-dot operational"></span>
+              <span class="health-title">System Operational</span>
+            </div>
+            <div class="health-details">
+              <div class="health-metric">
+                <span class="metric-key">Latency</span>
+                <span class="metric-val" id="engineLatencyVal">18 ms</span>
+              </div>
+              <div class="health-metric">
+                <span class="metric-key">Backend</span>
+                <span class="metric-val" id="backendModeVal">Simulation</span>
+              </div>
+              <div class="health-metric">
+                <span class="metric-key">Sample Rate</span>
+                <span class="metric-val" id="sampleRateVal">16.0 kHz</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT VIEW AREA -->
+      <main class="main-content" id="mainContent">
+        
+        <!-- ============================================================ -->
+        <!-- VIEW: LIVE MONITOR (PRIMARY VIEW)                           -->
+        <!-- ============================================================ -->
+        <section class="view-panel active" id="view-live-monitor">
+          
+          <!-- View Header -->
+          <div class="panel-header">
+            <div class="panel-header-left">
+              <div class="title-with-badge">
+                <h1 class="panel-title">Live Voice Monitoring</h1>
+                <div class="live-status-chip ready" id="liveHeaderChip">
+                  <span class="chip-dot"></span>
+                  <span class="chip-text" id="liveHeaderChipText">READY</span>
+                </div>
+              </div>
+              <p class="panel-subtitle">Continuous acoustic analysis & synthetic speech detection of active voice sessions</p>
+            </div>
+
+            <div class="panel-header-right">
+              <div class="threat-indicator-pill low" id="topThreatPill">
+                <span class="threat-pill-dot"></span>
+                <span class="threat-pill-text" id="topThreatPillText">Threat Level: Normal</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Non-Blocking Security Alert Banner (Triggered when risk > threshold) -->
+          <div class="security-alert-banner hidden" id="securityAlertBanner">
+            <div class="alert-banner-left">
+              <div class="alert-banner-icon">
+                <i data-lucide="alert-triangle"></i>
+              </div>
+              <div class="alert-banner-content">
+                <div class="alert-banner-title">HIGH-RISK VOICE DETECTED</div>
+                <div class="alert-banner-desc">
+                  Potential synthetic/manipulated speech indicators have exceeded configured threshold (Score: <strong id="alertBannerScore">72/100</strong>). Recommended Action: <strong>Secondary Caller Verification</strong>.
+                </div>
+              </div>
+            </div>
+            <div class="alert-banner-actions">
+              <button class="btn btn-secondary btn-sm" id="alertBannerChallengeBtn">
+                <i data-lucide="shield-question"></i>
+                <span>Challenge Caller</span>
+              </button>
+              <button class="btn btn-danger btn-sm" id="alertBannerEscalateBtn">
+                <i data-lucide="shield-alert"></i>
+                <span>Escalate Incident</span>
+              </button>
+              <button class="alert-close-btn" id="alertBannerCloseBtn" aria-label="Dismiss alert">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- SESSION CONTROL & TELEMETRY BAR -->
+          <div class="session-control-bar card">
+            <div class="session-control-left">
+              <div class="session-status-block">
+                <span class="status-label">Session Status</span>
+                <div class="status-value-wrap">
+                  <span class="status-indicator-dot ready" id="sessionStateDot"></span>
+                  <span class="status-text" id="sessionStateText">Ready</span>
+                </div>
+              </div>
+
+              <div class="session-actions">
+                <button class="btn btn-primary" id="btnStartMonitoring">
+                  <i data-lucide="mic" class="btn-icon"></i>
+                  <span>Start Monitoring</span>
+                </button>
+                <button class="btn btn-secondary" id="btnPauseMonitoring" disabled>
+                  <i data-lucide="pause" class="btn-icon"></i>
+                  <span>Pause</span>
+                </button>
+                <button class="btn btn-secondary btn-danger-hover" id="btnEndSession" disabled>
+                  <i data-lucide="square" class="btn-icon"></i>
+                  <span>End Session</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="session-telemetry-grid">
+              <div class="telemetry-item">
+                <span class="telemetry-label">Session ID</span>
+                <div class="telemetry-val-group">
+                  <span class="telemetry-val mono" id="sessionTelemetryId">VG-LIVE-10482</span>
+                  <button class="telemetry-copy-btn" id="copySessionIdBtn" title="Copy Session ID">
+                    <i data-lucide="copy"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Session Duration</span>
+                <span class="telemetry-val mono" id="sessionDurationVal">00:00</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Audio Source</span>
+                <span class="telemetry-val" id="audioSourceLabel">Browser Microphone</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Audio Quality</span>
+                <span class="telemetry-val quality-good" id="audioQualityVal">Good</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Analysis Mode</span>
+                <span class="telemetry-val" id="analysisModeVal">Continuous (2.0s)</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Backend Pipeline</span>
+                <span class="telemetry-val backend-status-pill" id="backendStatusLabel">Simulation</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRIMARY MONITORING GRID -->
+          <div class="monitor-grid">
+            
+            <!-- LEFT COLUMN: LIVE SIGNAL & SPECTROGRAM VISUALIZATION -->
+            <div class="grid-col-left">
+              
+              <!-- CARD 1: LIVE AUDIO SIGNAL WAVEFORM -->
+              <div class="card signal-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="waves" class="card-header-icon"></i>
+                    <h2 class="card-title">Live Audio Signal</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <div class="signal-indicator" id="signalLevelBadge">
+                      <span class="signal-dot good" id="signalDot"></span>
+                      <span class="signal-text" id="signalText">Signal: Standby</span>
+                    </div>
+                    <div class="rms-meter-wrap" title="Input Audio RMS Level">
+                      <span class="rms-label mono" id="rmsDecibelVal">-60 dB</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="canvas-container waveform-wrap">
+                  <canvas id="waveformCanvas"></canvas>
+                  <div class="canvas-overlay-guide" id="waveformStandbyOverlay">
+                    <i data-lucide="mic-off" class="overlay-icon"></i>
+                    <span>Click "Start Monitoring" to connect microphone audio stream</span>
+                  </div>
+                </div>
+
+                <div class="waveform-footer">
+                  <div class="audio-stat">
+                    <span class="stat-lbl">Peak Amplitude:</span>
+                    <span class="stat-val mono" id="peakAmplitudeVal">0.000</span>
+                  </div>
+                  <div class="audio-stat">
+                    <span class="stat-lbl">Zero-Crossing Rate:</span>
+                    <span class="stat-val mono" id="zcrVal">0 Hz</span>
+                  </div>
+                  <div class="audio-stat">
+                    <span class="stat-lbl">Active Buffers:</span>
+                    <span class="stat-val mono" id="bufferCountVal">0 frames</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 2: LIVE SPECTROGRAM & FFT FREQUENCY ANALYSIS -->
+              <div class="card spectrogram-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="bar-chart-2" class="card-header-icon"></i>
+                    <h2 class="card-title">Live Spectrogram & Harmonic Analysis</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <div class="spectrogram-legend">
+                      <span class="freq-tag">0 Hz</span>
+                      <span class="freq-tag">1 kHz</span>
+                      <span class="freq-tag">2 kHz</span>
+                      <span class="freq-tag">4 kHz</span>
+                      <span class="freq-tag">8 kHz</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="canvas-container spectrogram-wrap">
+                  <canvas id="spectrogramCanvas"></canvas>
+                  <div class="canvas-overlay-guide" id="spectrogramStandbyOverlay">
+                    <span>Frequency distribution will update in real-time as voice is detected</span>
+                  </div>
+                </div>
+
+                <!-- ROLLING AUDIO ANALYSIS WINDOW TIMELINE -->
+                <div class="analysis-timeline-block">
+                  <div class="timeline-meta">
+                    <div class="timeline-meta-left">
+                      <i data-lucide="clock" class="timeline-icon"></i>
+                      <span class="timeline-title">LIVE ANALYSIS PIPELINE</span>
+                      <span class="timeline-desc">Analyzing rolling 2.0-second audio windows</span>
+                    </div>
+                    <div class="timeline-meta-right">
+                      <span class="window-counter-badge" id="windowCounterBadge">0 Windows Evaluated</span>
+                    </div>
+                  </div>
+
+                  <div class="timeline-track-wrap">
+                    <div class="timeline-track">
+                      <div class="timeline-marker" style="left: 0%;"><span>00:00</span></div>
+                      <div class="timeline-marker" style="left: 25%;"><span>00:02</span></div>
+                      <div class="timeline-marker" style="left: 50%;"><span>00:04</span></div>
+                      <div class="timeline-marker" style="left: 75%;"><span>00:06</span></div>
+                      <div class="timeline-marker active" style="left: 100%;"><span>NOW</span></div>
+                      <div class="timeline-window-highlight" id="timelineWindowCursor">
+                        <span class="window-cursor-label">Current Window (2.0s)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 3: REAL-TIME RISK TREND TIMELINE CHART -->
+              <div class="card trend-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="trending-up" class="card-header-icon"></i>
+                    <h2 class="card-title">Voice Integrity Risk Trend (60s Rolling)</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <div class="chart-zones-legend">
+                      <span class="zone-indicator low">Low (&lt;40)</span>
+                      <span class="zone-indicator med">Medium (40-65)</span>
+                      <span class="zone-indicator high">High (&gt;65)</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="riskTrendChart"></canvas>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: RISK ENGINES, DIAGNOSTICS & DECISION CONSOLE -->
+            <div class="grid-col-right">
+              
+              <!-- CARD 4: CORE RISK GAUGE & SPOOF PROBABILITY -->
+              <div class="card risk-core-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="shield-alert" class="card-header-icon"></i>
+                    <h2 class="card-title">Voice Integrity Risk</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <span class="confidence-pill" id="modelConfidenceBadge">Confidence: 91%</span>
+                  </div>
+                </div>
+
+                <div class="risk-gauge-section">
+                  <!-- Circular SVG Risk Gauge -->
+                  <div class="gauge-wrapper">
+                    <svg class="risk-gauge-svg" viewBox="0 0 200 120">
+                      <!-- Background Arc -->
+                      <path class="gauge-bg-arc" d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke-width="14" stroke-linecap="round"/>
+                      <!-- Dynamic Animated Value Arc -->
+                      <path class="gauge-val-arc low" id="gaugeValArc" d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.32" stroke-dashoffset="251.32"/>
+                    </svg>
+                    <div class="gauge-center-content">
+                      <div class="gauge-numeric" id="gaugeScoreNum">0</div>
+                      <div class="gauge-max">/ 100</div>
+                      <div class="gauge-category low" id="gaugeCategoryLabel">LOW RISK</div>
+                    </div>
+                  </div>
+
+                  <!-- Horizontal Spoof vs Genuine Bar -->
+                  <div class="probability-split-container">
+                    <div class="prob-labels">
+                      <span class="prob-tag spoof">
+                        Potential Spoof: <strong id="spoofProbVal">0%</strong>
+                      </span>
+                      <span class="prob-tag genuine">
+                        Genuine: <strong id="genuineProbVal">100%</strong>
+                      </span>
+                    </div>
+                    <div class="prob-bar-track">
+                      <div class="prob-bar-fill-spoof" id="probBarSpoof" style="width: 0%;"></div>
+                      <div class="prob-bar-fill-genuine" id="probBarGenuine" style="width: 100%;"></div>
+                    </div>
+                  </div>
+
+                  <!-- Model metadata strip -->
+                  <div class="model-meta-strip">
+                    <div class="meta-cell">
+                      <span class="cell-label">Current Window</span>
+                      <span class="cell-val">2.0 sec</span>
+                    </div>
+                    <div class="meta-cell">
+                      <span class="cell-label">Model Ensemble</span>
+                      <span class="cell-val">ResNet-Conformer + AASIST</span>
+                    </div>
+                    <div class="meta-cell">
+                      <span class="cell-label">Smoothing</span>
+                      <span class="cell-val">EMA (α=0.35)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 5: ACOUSTIC SIGNALS DIAGNOSTIC MATRIX -->
+              <div class="card acoustic-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="cpu" class="card-header-icon"></i>
+                    <h2 class="card-title">Acoustic Signals Diagnostic Matrix</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <span class="refresh-indicator">Live Stream</span>
+                  </div>
+                </div>
+
+                <div class="acoustic-grid">
+                  
+                  <div class="acoustic-cell" id="acousticPitchCell">
+                    <div class="acoustic-cell-header">
+                      <span class="acoustic-name">Pitch Stability</span>
+                      <span class="status-badge normal" id="pitchStatusBadge">Normal</span>
+                    </div>
+                    <div class="acoustic-bar-track">
+                      <div class="acoustic-bar-fill normal" id="pitchBarFill" style="width: 18%;"></div>
+                    </div>
+                    <div class="acoustic-meta">
+                      <span class="acoustic-reading" id="pitchReadingText">F0 Jitter: 0.38% (Expected)</span>
+                    </div>
+                  </div>
+
+                  <div class="acoustic-cell" id="acousticEnergyCell">
+                    <div class="acoustic-cell-header">
+                      <span class="acoustic-name">Energy Pattern</span>
+                      <span class="status-badge normal" id="energyStatusBadge">Normal</span>
+                    </div>
+                    <div class="acoustic-bar-track">
+                      <div class="acoustic-bar-fill normal" id="energyBarFill" style="width: 22%;"></div>
+                    </div>
+                    <div class="acoustic-meta">
+                      <span class="acoustic-reading" id="energyReadingText">Dynamics: Natural Contour</span>
+                    </div>
+                  </div>
+
+                  <div class="acoustic-cell" id="acousticSpectralCell">
+                    <div class="acoustic-cell-header">
+                      <span class="acoustic-name">Spectral Consistency</span>
+                      <span class="status-badge normal" id="spectralStatusBadge">Normal</span>
+                    </div>
+                    <div class="acoustic-bar-track">
+                      <div class="acoustic-bar-fill normal" id="spectralBarFill" style="width: 26%;"></div>
+                    </div>
+                    <div class="acoustic-meta">
+                      <span class="acoustic-reading" id="spectralReadingText">Formant Distribution: Normal</span>
+                    </div>
+                  </div>
+
+                  <div class="acoustic-cell" id="acousticTemporalCell">
+                    <div class="acoustic-cell-header">
+                      <span class="acoustic-name">Temporal Consistency</span>
+                      <span class="status-badge normal" id="temporalStatusBadge">Normal</span>
+                    </div>
+                    <div class="acoustic-bar-track">
+                      <div class="acoustic-bar-fill normal" id="temporalBarFill" style="width: 15%;"></div>
+                    </div>
+                    <div class="acoustic-meta">
+                      <span class="acoustic-reading" id="temporalReadingText">Frame Transitions: Continuous</span>
+                    </div>
+                  </div>
+
+                  <div class="acoustic-cell" id="acousticArtifactCell">
+                    <div class="acoustic-cell-header">
+                      <span class="acoustic-name">Synthetic Artifact Signal</span>
+                      <span class="status-badge normal" id="artifactStatusBadge">Normal</span>
+                    </div>
+                    <div class="acoustic-bar-track">
+                      <div class="acoustic-bar-fill normal" id="artifactBarFill" style="width: 12%;"></div>
+                    </div>
+                    <div class="acoustic-meta">
+                      <span class="acoustic-reading" id="artifactReadingText">Vocoder Phase Artifacts: None</span>
+                    </div>
+                  </div>
+
+                  <div class="acoustic-cell" id="acousticPhaseCell">
+                    <div class="acoustic-cell-header">
+                      <span class="acoustic-name">Phase Coherence</span>
+                      <span class="status-badge normal" id="phaseStatusBadge">Normal</span>
+                    </div>
+                    <div class="acoustic-bar-track">
+                      <div class="acoustic-bar-fill normal" id="phaseBarFill" style="width: 14%;"></div>
+                    </div>
+                    <div class="acoustic-meta">
+                      <span class="acoustic-reading" id="phaseReadingText">Spectral Coherence: Optimal</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- CARD 6: CONTEXTUAL & COMPOSITE RISK ENGINE -->
+              <div class="card context-composite-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="layers" class="card-header-icon"></i>
+                    <h2 class="card-title">Contextual & Composite Risk Engine</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <span class="weight-badge">Multi-Factor Synthesis</span>
+                  </div>
+                </div>
+
+                <div class="composite-body">
+                  <!-- Context Metadata Table -->
+                  <div class="context-data-table">
+                    <div class="context-row">
+                      <span class="ctx-key">Caller Identifier</span>
+                      <span class="ctx-val mono">+91 •••• 2841</span>
+                    </div>
+                    <div class="context-row">
+                      <span class="ctx-key">Known Contact</span>
+                      <span class="ctx-val status-neg">No (Unrecognized Device)</span>
+                    </div>
+                    <div class="context-row">
+                      <span class="ctx-key">Fraud Threat History</span>
+                      <span class="ctx-val status-neg">2 Prior Incident Reports</span>
+                    </div>
+                    <div class="context-row">
+                      <span class="ctx-key">Transaction Value</span>
+                      <span class="ctx-val mono font-bold">₹75,000 <span class="ctx-sub">(Typical: ₹10,000)</span></span>
+                    </div>
+                    <div class="context-row">
+                      <span class="ctx-key">Session Time & Velocity</span>
+                      <span class="ctx-val">02:14 AM IST // Mumbai IP ↔ Delhi SIM</span>
+                    </div>
+                  </div>
+
+                  <!-- Composite Risk Breakdown -->
+                  <div class="composite-calc-section">
+                    <div class="calc-row">
+                      <div class="calc-label">
+                        <span>Voice Integrity Factor</span>
+                        <span class="calc-weight">(60% weight)</span>
+                      </div>
+                      <div class="calc-score" id="weightVoiceScore">0 / 100</div>
+                    </div>
+                    <div class="calc-row">
+                      <div class="calc-label">
+                        <span>Contextual Anomaly Factor</span>
+                        <span class="calc-weight">(30% weight)</span>
+                      </div>
+                      <div class="calc-score">72 / 100</div>
+                    </div>
+                    <div class="calc-row">
+                      <div class="calc-label">
+                        <span>Fraud History Factor</span>
+                        <span class="calc-weight">(10% weight)</span>
+                      </div>
+                      <div class="calc-score">80 / 100</div>
+                    </div>
+
+                    <div class="composite-final-bar">
+                      <div class="final-score-left">
+                        <span class="final-score-label">OVERALL COMPOSITE RISK</span>
+                        <span class="final-score-sub">Weighted fraud decision index</span>
+                      </div>
+                      <div class="final-score-right">
+                        <span class="final-score-num" id="overallRiskNum">29</span>
+                        <span class="final-score-denom">/ 100</span>
+                        <span class="final-badge low" id="overallRiskBadge">LOW</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 7: DECISION & RECOMMENDED ACTION CONSOLE -->
+              <div class="card decision-card" id="decisionCard">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="shield-check" class="card-header-icon"></i>
+                    <h2 class="card-title">Decision & Recommended Action</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <span class="action-tag monitor" id="actionStateTag">MONITOR</span>
+                  </div>
+                </div>
+
+                <div class="decision-body">
+                  <div class="decision-guidance" id="decisionGuidanceText">
+                    <div class="guidance-title" id="guidanceTitle">Acoustic Signal Within Baseline Parameters</div>
+                    <div class="guidance-desc" id="guidanceDesc">
+                      No synthetic speech artifacts or voice conversion anomalies detected. Continue standard monitoring.
+                    </div>
+                  </div>
+
+                  <div class="decision-actions-row">
+                    <button class="btn btn-secondary flex-1" id="btnRequestVerification">
+                      <i data-lucide="shield-question"></i>
+                      <span>Request Verification</span>
+                    </button>
+                    <button class="btn btn-danger flex-1" id="btnEscalateCase">
+                      <i data-lucide="alert-octagon"></i>
+                      <span>Escalate Case</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 8: DETECTION EVIDENCE EVENT STREAM -->
+              <div class="card evidence-card">
+                <div class="card-header">
+                  <div class="card-header-left">
+                    <i data-lucide="list" class="card-header-icon"></i>
+                    <h2 class="card-title">Detection Evidence Stream</h2>
+                  </div>
+                  <div class="card-header-right">
+                    <span class="evidence-count-badge" id="evidenceCountBadge">0 events</span>
+                  </div>
+                </div>
+
+                <div class="evidence-stream-list" id="evidenceStreamList">
+                  <div class="empty-evidence-placeholder" id="emptyEvidencePlaceholder">
+                    <i data-lucide="radio" class="empty-icon"></i>
+                    <span>Real-time anomaly markers and confidence telemetry will appear here</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: OVERVIEW / SOC EXECUTIVE DASHBOARD                     -->
+        <!-- ============================================================ -->
+        <section class="view-panel" id="view-overview">
+          <div class="panel-header">
+            <div>
+              <h1 class="panel-title">Security Operations Overview</h1>
+              <p class="panel-subtitle">Real-time telemetry and fleet-wide voice integrity risk distribution</p>
+            </div>
+            <div class="panel-header-right">
+              <span class="timestamp-badge">Updated Just Now</span>
+            </div>
+          </div>
+
+          <div class="stats-overview-grid">
+            <div class="card stat-kpi-card">
+              <div class="stat-kpi-header">
+                <span class="kpi-label">Active Monitored Streams</span>
+                <i data-lucide="activity" class="kpi-icon info"></i>
+              </div>
+              <div class="kpi-val">12</div>
+              <div class="kpi-sub">Across 3 regional telephony gateways</div>
+            </div>
+
+            <div class="card stat-kpi-card">
+              <div class="stat-kpi-header">
+                <span class="kpi-label">Flagged High-Risk (24h)</span>
+                <i data-lucide="alert-triangle" class="kpi-icon danger"></i>
+              </div>
+              <div class="kpi-val">7</div>
+              <div class="kpi-sub"><strong class="status-neg">+2</strong> vs previous 24-hour cycle</div>
+            </div>
+
+            <div class="card stat-kpi-card">
+              <div class="stat-kpi-header">
+                <span class="kpi-label">Avg Fleet Voice Integrity</span>
+                <i data-lucide="shield-check" class="kpi-icon success"></i>
+              </div>
+              <div class="kpi-val">89.4%</div>
+              <div class="kpi-sub">Nominal baseline integrity</div>
+            </div>
+
+            <div class="card stat-kpi-card">
+              <div class="stat-kpi-header">
+                <span class="kpi-label">Synthetic Spoofs Prevented</span>
+                <i data-lucide="ban" class="kpi-icon warn"></i>
+              </div>
+              <div class="kpi-val">14</div>
+              <div class="kpi-sub">₹4.2M potential fraud blocked</div>
+            </div>
+          </div>
+
+          <div class="overview-secondary-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Recent Critical Alert Detections</h3>
+              </div>
+              <div class="overview-table-wrap">
+                <table class="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Session ID</th>
+                      <th>Time</th>
+                      <th>Caller ID</th>
+                      <th>Peak Risk</th>
+                      <th>Primary Anomaly</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="mono font-bold">VG-10482</td>
+                      <td>Today, 02:14 AM</td>
+                      <td class="mono">+91 98410 28419</td>
+                      <td><span class="status-badge danger">78 High</span></td>
+                      <td>Vocoder synthetic phase artifact</td>
+                      <td><span class="status-badge warn">Escalated</span></td>
+                    </tr>
+                    <tr>
+                      <td class="mono font-bold">VG-10481</td>
+                      <td>Yesterday, 22:30</td>
+                      <td class="mono">+91 91223 90182</td>
+                      <td><span class="status-badge success">24 Low</span></td>
+                      <td>None (Natural Voice)</td>
+                      <td><span class="status-badge success">Monitored</span></td>
+                    </tr>
+                    <tr>
+                      <td class="mono font-bold">VG-10480</td>
+                      <td>Yesterday, 19:45</td>
+                      <td class="mono">+91 98711 02931</td>
+                      <td><span class="status-badge warn">57 Med</span></td>
+                      <td>Abrupt F0 pitch jitter anomaly</td>
+                      <td><span class="status-badge warn">Challenged</span></td>
+                    </tr>
+                    <tr>
+                      <td class="mono font-bold">VG-10479</td>
+                      <td>Yesterday, 17:10</td>
+                      <td class="mono">+91 99401 88320</td>
+                      <td><span class="status-badge danger">84 High</span></td>
+                      <td>Cloned TTS model spectral footprint</td>
+                      <td><span class="status-badge danger">Blocked</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Threat Vector Distribution</h3>
+              </div>
+              <div class="threat-dist-list">
+                <div class="threat-dist-item">
+                  <div class="threat-dist-meta">
+                    <span>Neural TTS Synthesis (ElevenLabs/VITS)</span>
+                    <span class="mono font-bold">48%</span>
+                  </div>
+                  <div class="threat-dist-bar"><div class="threat-bar-fill" style="width: 48%;"></div></div>
+                </div>
+                <div class="threat-dist-item">
+                  <div class="threat-dist-meta">
+                    <span>Voice Conversion / Real-Time RVC</span>
+                    <span class="mono font-bold">28%</span>
+                  </div>
+                  <div class="threat-dist-bar"><div class="threat-bar-fill" style="width: 28%;"></div></div>
+                </div>
+                <div class="threat-dist-item">
+                  <div class="threat-dist-meta">
+                    <span>Acoustic Replay Attack</span>
+                    <span class="mono font-bold">16%</span>
+                  </div>
+                  <div class="threat-dist-bar"><div class="threat-bar-fill" style="width: 16%;"></div></div>
+                </div>
+                <div class="threat-dist-item">
+                  <div class="threat-dist-meta">
+                    <span>Adversarial Noise Perturbation</span>
+                    <span class="mono font-bold">8%</span>
+                  </div>
+                  <div class="threat-dist-bar"><div class="threat-bar-fill" style="width: 8%;"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: INVESTIGATIONS                                         -->
+        <!-- ============================================================ -->
+        <section class="view-panel" id="view-investigations">
+          <div class="panel-header">
+            <div>
+              <h1 class="panel-title">Investigations Case Management</h1>
+              <p class="panel-subtitle">Escalated voice fraud cases requiring secondary forensic review</p>
+            </div>
+            <div class="panel-header-right">
+              <button class="btn btn-primary" id="btnNewInvestigationFromNav">
+                <i data-lucide="plus"></i>
+                <span>New Case</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-toolbar">
+              <div class="toolbar-search">
+                <i data-lucide="search"></i>
+                <input type="text" id="investigationFilterInput" placeholder="Filter by case ID, reason, or assignee...">
+              </div>
+              <div class="toolbar-filters">
+                <select class="select-control" id="investigationStatusFilter">
+                  <option value="all">All Statuses</option>
+                  <option value="Open">Open</option>
+                  <option value="In Review">In Review</option>
+                  <option value="Escalated">Escalated</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="enterprise-table" id="investigationsTable">
+                <thead>
+                  <tr>
+                    <th>Case ID</th>
+                    <th>Linked Session</th>
+                    <th>Created</th>
+                    <th>Risk Score</th>
+                    <th>Priority</th>
+                    <th>Primary Reason</th>
+                    <th>Assigned Team</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="investigationsTableBody">
+                  <!-- Dynamic or seeded cases -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: DETECTION HISTORY                                      -->
+        <!-- ============================================================ -->
+        <section class="view-panel" id="view-history">
+          <div class="panel-header">
+            <div>
+              <h1 class="panel-title">Detection History & Session Audit Log</h1>
+              <p class="panel-subtitle">Historical audit trail of all monitored voice sessions and integrity evaluations</p>
+            </div>
+            <div class="panel-header-right">
+              <button class="btn btn-secondary" id="btnExportAllHistory">
+                <i data-lucide="download"></i>
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-toolbar">
+              <div class="toolbar-search">
+                <i data-lucide="search"></i>
+                <input type="text" id="historySearchInput" placeholder="Search sessions, dates, caller IDs...">
+              </div>
+              <div class="toolbar-filters">
+                <select class="select-control" id="historyStatusFilter">
+                  <option value="all">All Risk Levels</option>
+                  <option value="High">High Risk</option>
+                  <option value="Medium">Medium Risk</option>
+                  <option value="Low">Low Risk</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="enterprise-table" id="historyTable">
+                <thead>
+                  <tr>
+                    <th>Session ID</th>
+                    <th>Date & Time</th>
+                    <th>Duration</th>
+                    <th>Audio Source</th>
+                    <th>Windows Evaluated</th>
+                    <th>Peak Risk</th>
+                    <th>Risk Category</th>
+                    <th>Action Taken</th>
+                    <th>Report</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <!-- Seeded historical rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: ANALYTICS & EVALUATION METRICS                         -->
+        <!-- ============================================================ -->
+        <section class="view-panel" id="view-analytics">
+          <div class="panel-header">
+            <div>
+              <h1 class="panel-title">Model Analytics & Evaluation Metrics</h1>
+              <p class="panel-subtitle">Empirical performance benchmarks, false positive rates, and latency analytics</p>
+            </div>
+            <div class="panel-header-right">
+              <span class="evaluation-disclaimer-pill">
+                <i data-lucide="info"></i>
+                <span>Benchmark: ASVspoof 2021 DF & In-The-Wild</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="analytics-metrics-grid">
+            <div class="card eval-card">
+              <div class="eval-title">Equal Error Rate (EER)</div>
+              <div class="eval-val mono font-bold">1.84%</div>
+              <div class="eval-sub">Target &lt; 2.50% across vocoder variations</div>
+            </div>
+            <div class="card eval-card">
+              <div class="eval-title">Precision (Spoof Detection)</div>
+              <div class="eval-val mono font-bold">98.2%</div>
+              <div class="eval-sub">At operational threshold τ = 0.65</div>
+            </div>
+            <div class="card eval-card">
+              <div class="eval-title">Recall (Sensitivity)</div>
+              <div class="eval-val mono font-bold">97.6%</div>
+              <div class="eval-sub">Evaluated on 40,000 synthetic audio slices</div>
+            </div>
+            <div class="card eval-card">
+              <div class="eval-title">False Positive Rate (FPR)</div>
+              <div class="eval-val mono font-bold">1.21%</div>
+              <div class="eval-sub">Verified on clean telephony speech corpus</div>
+            </div>
+            <div class="card eval-card">
+              <div class="eval-title">Inference Window Latency</div>
+              <div class="eval-val mono font-bold">142 ms</div>
+              <div class="eval-sub">Per 2.0-second rolling audio chunk</div>
+            </div>
+            <div class="card eval-card">
+              <div class="eval-title">Streaming Memory Footprint</div>
+              <div class="eval-val mono font-bold">48.2 MB</div>
+              <div class="eval-sub">Circular buffer & Web Audio context</div>
+            </div>
+          </div>
+
+          <div class="analytics-charts-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Rolling Risk Distribution (Weekly Trend)</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="analyticsWeeklyChart"></canvas>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Model Reliability by Codec / Bandwidth</h3>
+              </div>
+              <div class="overview-table-wrap">
+                <table class="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Audio Format / Codec</th>
+                      <th>Sample Rate</th>
+                      <th>EER</th>
+                      <th>FPR</th>
+                      <th>Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>G.711 A-law (PSTN)</td>
+                      <td>8 kHz</td>
+                      <td class="mono">2.41%</td>
+                      <td class="mono">1.8%</td>
+                      <td><span class="status-badge success">High</span></td>
+                    </tr>
+                    <tr>
+                      <td>Opus WebRTC HD</td>
+                      <td>48 kHz / 16 kHz</td>
+                      <td class="mono">1.12%</td>
+                      <td class="mono">0.9%</td>
+                      <td><span class="status-badge success">Optimal</span></td>
+                    </tr>
+                    <tr>
+                      <td>AMR-WB (VoLTE)</td>
+                      <td>16 kHz</td>
+                      <td class="mono">1.65%</td>
+                      <td class="mono">1.2%</td>
+                      <td><span class="status-badge success">High</span></td>
+                    </tr>
+                    <tr>
+                      <td>Raw PCM (Browser Mic)</td>
+                      <td>44.1 / 48 kHz</td>
+                      <td class="mono">0.94%</td>
+                      <td class="mono">0.7%</td>
+                      <td><span class="status-badge success">Optimal</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: SETTINGS                                               -->
+        <!-- ============================================================ -->
+        <section class="view-panel" id="view-settings">
+          <div class="panel-header">
+            <div>
+              <h1 class="panel-title">System Settings & Engine Configuration</h1>
+              <p class="panel-subtitle">Configure thresholds, audio parameters, WebSocket pipeline, and attack simulation profiles</p>
+            </div>
+            <div class="panel-header-right">
+              <button class="btn btn-primary" id="btnSaveSettings">
+                <i data-lucide="save"></i>
+                <span>Save Configuration</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            
+            <!-- Risk Thresholds -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Risk Scoring Thresholds</h3>
+              </div>
+              <div class="settings-form">
+                <div class="form-group">
+                  <label class="form-label" for="settingMediumThreshold">
+                    <span>Medium Risk Threshold (Challenge Trigger)</span>
+                    <span class="mono font-bold" id="lblMediumThreshold">40 / 100</span>
+                  </label>
+                  <input type="range" class="range-control" id="settingMediumThreshold" min="20" max="60" value="40">
+                  <span class="form-help">Scores above this value trigger the "CHALLENGE" secondary verification recommendation.</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="settingHighThreshold">
+                    <span>High Risk Threshold (Security Alert & Escalate)</span>
+                    <span class="mono font-bold" id="lblHighThreshold">65 / 100</span>
+                  </label>
+                  <input type="range" class="range-control" id="settingHighThreshold" min="50" max="90" value="65">
+                  <span class="form-help">Scores exceeding this threshold generate high-priority security operations alerts.</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="settingSmoothingFactor">
+                    <span>Exponential Moving Average (EMA) Smoothing (α)</span>
+                    <span class="mono font-bold" id="lblSmoothingFactor">0.35</span>
+                  </label>
+                  <input type="range" class="range-control" id="settingSmoothingFactor" min="0.1" max="0.9" step="0.05" value="0.35">
+                  <span class="form-help">Controls risk score smoothing responsive rate across rolling evaluation windows.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- WebSocket & Backend Pipeline -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">WebSocket & Backend Integration</h3>
+              </div>
+              <div class="settings-form">
+                <div class="form-group">
+                  <label class="form-label" for="settingWsEndpoint">Backend WebSocket Endpoint</label>
+                  <div class="input-with-action">
+                    <input type="text" class="text-control mono" id="settingWsEndpoint" value="ws://localhost:8000/ws/analyze" placeholder="ws://localhost:8000/ws/analyze">
+                    <button class="btn btn-secondary" id="btnTestWsConnection">Test Connection</button>
+                  </div>
+                  <span class="form-help">FastAPI / WebRTC anti-spoof model streaming ingestion endpoint. Falls back gracefully to local DSP engine when offline.</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="settingAudioChunkWindow">Rolling Audio Chunk Window Size</label>
+                  <select class="select-control" id="settingAudioChunkWindow">
+                    <option value="1.0">1.0 Second (Ultra Low Latency)</option>
+                    <option value="2.0" selected>2.0 Seconds (Recommended Standard)</option>
+                    <option value="3.0">3.0 Seconds (Enhanced High-Resolution FFT)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="settingAudioInputDevice">Audio Input Device</label>
+                  <select class="select-control" id="settingAudioInputDevice">
+                    <option value="default">Default System Microphone</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Simulation Threat Profiles (For live testing without active spoof callers) -->
+            <div class="card full-width">
+              <div class="card-header">
+                <h3 class="card-title">Local DSP Engine Threat Simulation Profile</h3>
+                <span class="badge-pill">Testing & Verification</span>
+              </div>
+              <div class="settings-form">
+                <p class="form-help mb-12">
+                  When the live FastAPI backend is offline, the local DSP engine analyzes real microphone audio acoustics and layers this selected threat profile to simulate realistic model behaviors:
+                </p>
+                <div class="simulation-profiles-grid">
+                  <label class="sim-profile-card">
+                    <input type="radio" name="simProfile" value="natural" checked>
+                    <div class="profile-card-content">
+                      <div class="profile-title">
+                        <i data-lucide="user-check"></i>
+                        <span>Natural Genuine Speech</span>
+                      </div>
+                      <div class="profile-desc">Clean human vocal tract acoustics, continuous pitch F0 harmonics, no vocoder artifacts. Expected Risk: 10–25%.</div>
+                    </div>
+                  </label>
+
+                  <label class="sim-profile-card">
+                    <input type="radio" name="simProfile" value="tts_clone">
+                    <div class="profile-card-content">
+                      <div class="profile-title">
+                        <i data-lucide="bot"></i>
+                        <span>Neural Voice Clone / TTS Attack</span>
+                      </div>
+                      <div class="profile-desc">Simulates neural acoustic model footprints, phase discontinuities, and high-frequency spectral flattening. Expected Risk: 70–92%.</div>
+                    </div>
+                  </label>
+
+                  <label class="sim-profile-card">
+                    <input type="radio" name="simProfile" value="voice_conversion">
+                    <div class="profile-card-content">
+                      <div class="profile-title">
+                        <i data-lucide="repeat"></i>
+                        <span>Real-Time Voice Conversion (RVC)</span>
+                      </div>
+                      <div class="profile-desc">Simulates timbre conversion, formant shifts, pitch tracking lag, and elevated jitter. Expected Risk: 55–78%.</div>
+                    </div>
+                  </label>
+
+                  <label class="sim-profile-card">
+                    <input type="radio" name="simProfile" value="replay_attack">
+                    <div class="profile-card-content">
+                      <div class="profile-title">
+                        <i data-lucide="disc"></i>
+                        <span>Acoustic Replay Attack</span>
+                      </div>
+                      <div class="profile-desc">Simulates loudspeaker reverberation, channel distortion, and low-frequency cutoffs. Expected Risk: 45–68%.</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODALS & DIALOGS                                             -->
+    <!-- ============================================================ -->
+
+    <!-- MODAL 1: MICROPHONE PERMISSION REQUIRED -->
+    <div class="modal-backdrop hidden" id="micPermissionModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-icon-wrap danger">
+            <i data-lucide="mic-off"></i>
+          </div>
+          <div class="modal-title-group">
+            <h3 class="modal-title">Microphone Access Required</h3>
+            <p class="modal-subtitle">VoiceGuard security pipeline permission</p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <p>VoiceGuard requires continuous access to the browser audio stream to perform real-time acoustic analysis and anti-spoofing detection.</p>
+          <div class="modal-info-box">
+            <i data-lucide="shield-check"></i>
+            <span>Audio stream processing is performed in real-time memory and complies with zero-retention privacy protocols.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnCancelMicPermission">Cancel</button>
+          <button class="btn btn-primary" id="btnRetryMicPermission">
+            <i data-lucide="refresh-cw"></i>
+            <span>Try Again</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: CONFIRM END SESSION -->
+    <div class="modal-backdrop hidden" id="confirmEndSessionModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-icon-wrap warn">
+            <i data-lucide="alert-circle"></i>
+          </div>
+          <div class="modal-title-group">
+            <h3 class="modal-title">End Voice Monitoring Session?</h3>
+            <p class="modal-subtitle">Active Session: <strong id="endSessionPromptId">VG-LIVE-10482</strong></p>
+          </div>
+        </div>
+        <div class="modal-body">
+          <p>Ending this session will finalize the voice integrity evaluation, close the audio pipeline, and generate the final incident assessment report.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnCancelEndSession">Continue Monitoring</button>
+          <button class="btn btn-danger" id="btnConfirmEndSession">
+            <i data-lucide="square"></i>
+            <span>End Session</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: SESSION COMPLETE SUMMARY -->
+    <div class="modal-backdrop hidden" id="sessionSummaryModal">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <div class="modal-icon-wrap" id="summaryHeaderIconWrap">
+            <i data-lucide="file-check-2" id="summaryHeaderIcon"></i>
+          </div>
+          <div class="modal-title-group">
+            <h3 class="modal-title">Monitoring Session Complete</h3>
+            <p class="modal-subtitle" id="summarySessionIdSubtitle">Session VG-LIVE-10482 Summary</p>
+          </div>
+          <button class="modal-close-btn" id="btnCloseSummaryModal" aria-label="Close summary modal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          
+          <div class="summary-final-assessment" id="summaryFinalAssessmentBanner">
+            <div class="assessment-left">
+              <span class="assessment-title">Final Assessment:</span>
+              <span class="assessment-badge high" id="summaryAssessmentBadge">HIGH RISK</span>
+            </div>
+            <div class="assessment-right">
+              <span class="assessment-rec-label">Recommended Action:</span>
+              <span class="assessment-rec-val" id="summaryAssessmentAction">Secondary Caller Verification & Investigation</span>
+            </div>
+          </div>
+
+          <div class="summary-stats-grid">
+            <div class="summary-stat-cell">
+              <span class="stat-cell-lbl">Session Duration</span>
+              <span class="stat-cell-val mono" id="summaryDurationVal">06:42</span>
+            </div>
+            <div class="summary-stat-cell">
+              <span class="stat-cell-lbl">Peak Risk Score</span>
+              <span class="stat-cell-val mono font-bold status-neg" id="summaryPeakRiskVal">78 / 100</span>
+            </div>
+            <div class="summary-stat-cell">
+              <span class="stat-cell-lbl">Average Risk Score</span>
+              <span class="stat-cell-val mono" id="summaryAvgRiskVal">43 / 100</span>
+            </div>
+            <div class="summary-stat-cell">
+              <span class="stat-cell-lbl">High-Risk Events</span>
+              <span class="stat-cell-val mono" id="summaryHighEventsVal">4</span>
+            </div>
+            <div class="summary-stat-cell">
+              <span class="stat-cell-lbl">Analysis Windows</span>
+              <span class="stat-cell-val mono" id="summaryTotalWindowsVal">201</span>
+            </div>
+            <div class="summary-stat-cell">
+              <span class="stat-cell-lbl">Audio Stream Quality</span>
+              <span class="stat-cell-val" id="summaryAudioQualityVal">Good (Nominal)</span>
+            </div>
+          </div>
+
+          <div class="summary-events-section">
+            <div class="summary-section-title">Key Anomaly Evidence Recorded:</div>
+            <div class="summary-events-list" id="summaryEventsList">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnExportSessionReport">
+            <i data-lucide="download"></i>
+            <span>Export Report (JSON)</span>
+          </button>
+          <button class="btn btn-danger" id="btnOpenInvestigationFromSummary">
+            <i data-lucide="folder-plus"></i>
+            <span>Open Investigation</span>
+          </button>
+          <button class="btn btn-primary" id="btnStartNewSessionFromSummary">
+            <i data-lucide="rotate-cw"></i>
+            <span>Start New Session</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: CREATE INVESTIGATION -->
+    <div class="modal-backdrop hidden" id="createInvestigationModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-icon-wrap danger">
+            <i data-lucide="shield-alert"></i>
+          </div>
+          <div class="modal-title-group">
+            <h3 class="modal-title">Create Security Investigation</h3>
+            <p class="modal-subtitle">Escalate voice integrity anomaly to fraud response team</p>
+          </div>
+          <button class="modal-close-btn" id="btnCloseInvestigationModal" aria-label="Close investigation modal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="investigationForm" class="modal-form" onsubmit="return false;">
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">Case ID</label>
+                <input type="text" class="text-control mono" id="caseIdInput" value="VG-CASE-10482" readonly>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Linked Session</label>
+                <input type="text" class="text-control mono" id="caseLinkedSessionInput" value="VG-LIVE-10482" readonly>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">Peak Detected Risk</label>
+                <input type="text" class="text-control mono font-bold" id="caseRiskInput" value="78 — HIGH RISK" readonly>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Priority Level</label>
+                <select class="select-control" id="casePrioritySelect">
+                  <option value="Critical">Critical (Immediate Freeze)</option>
+                  <option value="High" selected>High (Triage &lt; 15 min)</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Primary Detection Reason</label>
+              <input type="text" class="text-control" id="caseReasonInput" value="Potential synthetic voice indicators & high-risk contextual profile">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Assign To</label>
+              <select class="select-control" id="caseAssigneeSelect">
+                <option value="Fraud Security Team">Fraud Security Team (Primary)</option>
+                <option value="Tier-2 Forensic Response">Tier-2 Forensic Response</option>
+                <option value="Executive Escalation Unit">Executive Escalation Unit</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Analyst Forensic Notes</label>
+              <textarea class="textarea-control" id="caseNotesInput" rows="3" placeholder="Enter notes on caller response, voice characteristics, and step-up challenge outcome..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnCancelInvestigation">Cancel</button>
+          <button class="btn btn-danger" id="btnSubmitInvestigation">
+            <i data-lucide="check-circle-2"></i>
+            <span>Create Investigation</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: CHALLENGE / SECONDARY CALLER VERIFICATION -->
+    <div class="modal-backdrop hidden" id="challengeModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-icon-wrap warn">
+            <i data-lucide="shield-question"></i>
+          </div>
+          <div class="modal-title-group">
+            <h3 class="modal-title">Secondary Caller Verification</h3>
+            <p class="modal-subtitle">Step-up authentication challenge for caller +91 •••• 2841</p>
+          </div>
+          <button class="modal-close-btn" id="btnCloseChallengeModal" aria-label="Close verification modal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-12">Select an out-of-band verification challenge to confirm the caller's true identity:</p>
+          <div class="challenge-options-list">
+            <label class="challenge-opt-card">
+              <input type="radio" name="challengeType" value="push_otp" checked>
+              <div class="opt-content">
+                <div class="opt-title">In-App Biometric Push Notification</div>
+                <div class="opt-desc">Sends instantaneous biometric prompt to customer's registered hardware device.</div>
+              </div>
+            </label>
+            <label class="challenge-opt-card">
+              <input type="radio" name="challengeType" value="sms_otp">
+              <div class="opt-content">
+                <div class="opt-title">Secure SMS One-Time Passcode (OTP)</div>
+                <div class="opt-desc">Sends 6-digit OTP to verified carrier SIM number.</div>
+              </div>
+            </label>
+            <label class="challenge-opt-card">
+              <input type="radio" name="challengeType" value="knowledge_challenge">
+              <div class="opt-content">
+                <div class="opt-title">Dynamic Knowledge-Based Challenge</div>
+                <div class="opt-desc">Prompts analyst to request customer's last authorization date and channel.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btnCancelChallenge">Cancel</button>
+          <button class="btn btn-primary" id="btnSendChallenge">
+            <i data-lucide="send"></i>
+            <span>Dispatch Verification Challenge</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION SYSTEM -->
+    <div class="toast-container" id="toastContainer"></div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Audio Uploads & Databases
+backend/uploads/*
+!backend/uploads/.gitkeep
+*.db
+*.sqlite3
+
+# Test & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.streamlit/
+
+# OS
+.DS_Store
+Thumbs.db
